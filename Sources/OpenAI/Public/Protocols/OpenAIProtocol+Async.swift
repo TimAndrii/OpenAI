@@ -279,6 +279,39 @@ public extension OpenAIProtocol {
         }
     }
 
+    func stepsRetrieve(
+        threadId: String,
+        runId: String
+    ) async throws -> ThreadsStepsResult {
+        try await withCheckedThrowingContinuation { continuation in
+            stepsRetrieve(threadId: threadId, runId: runId) { result in
+                switch result {
+                    case let .success(success):
+                        return continuation.resume(returning: success)
+                    case let .failure(failure):
+                        return continuation.resume(throwing: failure)
+                }
+            }
+        }
+    }
+
+    func runSubmitTool(
+        threadId: String,
+        runId: String,
+        query: SubmitToolQuery
+    ) async throws -> RunSubmitToolResult {
+        try await withCheckedThrowingContinuation { continuation in
+            runSubmitTool(threadId: threadId, runId: runId, query: query) { result in
+                switch result {
+                    case let .success(success):
+                        return continuation.resume(returning: success)
+                    case let .failure(failure):
+                        return continuation.resume(throwing: failure)
+                }
+            }
+        }
+    }
+
     func runRetrieve(
         threadId: String,
         runId: String

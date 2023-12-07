@@ -65,6 +65,14 @@ final public class OpenAI: OpenAIProtocol {
         performRequest(request: JSONRequest<ThreadsMessagesResult>(body: nil, url: buildRunsURL(path: .threadsMessages, threadId: threadId, before: before), method: "GET"), completion: completion)
     }
 
+    public func stepsRetrieve(threadId: String, runId: String, completion: @escaping (Result<ThreadsStepsResult, Error>) -> Void) {
+        performRequest(request: JSONRequest<ThreadsStepsResult>(body: nil, url: buildRunRetrieveURL(path: .retrieveSteps, threadId: threadId, runId: runId), method: "GET"), completion: completion)
+    }
+
+    public func runSubmitTool(threadId: String, runId: String, query: SubmitToolQuery, completion: @escaping (Result<RunSubmitToolResult, Error>) -> Void) {
+        performRequest(request: JSONRequest<RunSubmitToolResult>(body: query, url: buildRunRetrieveURL(path: .submitToolOutputs, threadId: threadId, runId: runId)), completion: completion)
+    }
+
     public func runRetrieve(threadId: String, runId: String, completion: @escaping (Result<RunRetreiveResult, Error>) -> Void) {
         performRequest(request: JSONRequest<RunRetreiveResult>(body: nil, url: buildRunRetrieveURL(path: .runRetrieve, threadId: threadId, runId: runId), method: "GET"), completion: completion)
     }
@@ -152,7 +160,8 @@ extension OpenAI {
     func performRequest<ResultType: Codable>(request: any URLRequestBuildable, completion: @escaping (Result<ResultType, Error>) -> Void) {
         do {
             let request = try request.build(token: configuration.token, organizationIdentifier: configuration.organizationIdentifier, timeoutInterval: configuration.timeoutInterval)
-            let task = session.dataTask(with: request) { data, _, error in
+            print(request, "🔥")
+            let task = session.dataTask(with: request) { data, response, error in
                 if let error = error {
                     completion(.failure(error))
                     return
@@ -164,9 +173,6 @@ extension OpenAI {
 
                 var apiError: Error? = nil
                 do {
-
-                    let errorText = String(data: data, encoding: .utf8)
-
                     let decoded = try JSONDecoder().decode(ResultType.self, from: data)
                     completion(.success(decoded))
                 } catch {
@@ -263,6 +269,8 @@ extension APIPath {
     static let runs = "/v1/threads/THREAD_ID/runs"
     static let runRetrieve = "/v1/threads/THREAD_ID/runs/RUN_ID"
     static let threadsMessages = "/v1/threads/THREAD_ID/messages"
+    static let retrieveSteps = "/v1/threads/THREAD_ID/runs/RUN_ID/steps"
+    static let submitToolOutputs = "/v1/threads/THREAD_ID/runs/RUN_ID/submit_tool_outputs"
     static let files = "/v1/files"
     // 1106 end
 

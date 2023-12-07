@@ -43,14 +43,11 @@ public struct AssistantsQuery: Codable {
 }
 
 public struct Tool: Codable, Equatable {
-    public let toolType: String
+    public let type: String
+    public let function: ChatFunctionDeclaration?
 
-    enum CodingKeys: String, CodingKey {
-        case toolType = "type"
+    public init(type: String, function: ChatFunctionDeclaration?) {
+        self.type = type
+        self.function = function
     }
-
-    public init(toolType: String) {
-        self.toolType = toolType
-    }
-
 }

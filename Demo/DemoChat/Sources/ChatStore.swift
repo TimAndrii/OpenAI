@@ -24,6 +24,7 @@ public final class ChatStore: ObservableObject {
     private var currentRunId: String?
     private var currentThreadId: String?
     private var currentConversationId: String?
+    private var userMassage: Message?
 
     @Published var isSendingMessage = false
 
@@ -82,7 +83,7 @@ public final class ChatStore: ObservableObject {
             )
         // For assistant case we send chats to thread and then poll, polling will receive sent chat + new assistant messages.
         case .assistant:
-
+            userMassage = message
             // First message in an assistant thread.
             if conversations[conversationIndex].messages.count == 0 {
 
@@ -248,6 +249,14 @@ public final class ChatStore: ObservableObject {
 
             switch result.status {
             // Get threadsMesages.
+            case "requires_action":
+                    guard let currentThreadId, let currentRunId else { return }
+                    let stepsResult = try await openAIClient.stepsRetrieve(threadId: currentThreadId, runId: currentRunId)
+                    
+                    let toolID = stepsResult.data?.first?.stepDetails?.toolCalls?.first
+
+                    let sumbitQuery = SubmitToolQuery(toolOutputs: [ToolOutputs(toolCallId: toolID?.id, output: "Say to user: Wazzap Man?")])
+                    let sumbitTool = try await openAIClient.runSubmitTool(threadId: currentThreadId, runId: currentRunId, query: sumbitQuery)
             case "completed":
                 DispatchQueue.main.async {
                     self.stopPolling()

@@ -328,6 +328,39 @@ public protocol OpenAIProtocol {
                           Returns a `Result` of type `RunRetreiveResult` if successful, or an `Error` if an error occurs.
      **/
     func runRetrieve(threadId: String, runId: String, completion: @escaping (Result<RunRetreiveResult, Error>) -> Void)
+    
+    /**
+     This function sends the thread ID and run ID to the OpenAI API and retrieves the called functions.
+
+     Example: Retrieve Run
+     ```
+     openAI.runRetrieve(threadId: currentThreadId, runId: currentRunId) { result in
+        //Handle response here
+     }
+     ```
+     - Parameter threadId: The thread id for the thread to run.
+     - Parameter runId: The run id for the run to retrieve.
+     - Parameter completion: The completion handler to be executed upon completion of the runRetrieve request.
+                          Returns a `Result` of type `ThreadsStepsResult` if successful, or an `Error` if an error occurs.
+     **/
+    func stepsRetrieve(threadId: String, runId: String, completion: @escaping (Result<ThreadsStepsResult, Error>) -> Void)
+
+    /**
+     This function sends the thread ID and run ID to the OpenAI API and retrieves the called functions.
+
+     Example: Retrieve Run
+     ```
+     openAI.runRetrieve(threadId: currentThreadId, runId: currentRunId) { result in
+        //Handle response here
+     }
+     ```
+     - Parameter threadId: The thread id for the thread to run.
+     - Parameter runId: The run id for the run to retrieve.
+     - Parameter query: The `SubmitToolQuery` instance, containing the information required for the threads request.
+     - Parameter completion: The completion handler to be executed upon completion of the runRetrieve request.
+                          Returns a `Result` of type `RunSubmitToolResult` if successful, or an `Error` if an error occurs.
+     **/
+    func runSubmitTool(threadId: String, runId: String, query: SubmitToolQuery, completion: @escaping (Result<RunSubmitToolResult, Error>) -> Void)
 
     /**
      This function sends a thread id and run id to the OpenAI API and retrieves a threads messages.

@@ -29,7 +29,15 @@ public final class AssistantStore: ObservableObject {
     @MainActor
     func createAssistant(name: String, description: String, instructions: String, codeInterpreter: Bool, retrievel: Bool, fileIds: [String]? = nil) async -> String? {
         do {
-            let tools = createToolsArray(codeInterpreter: codeInterpreter, retrieval: retrievel)
+            let tools = createToolsArray(codeInterpreter: codeInterpreter, retrieval: retrievel, functions: [
+                .init(name: "Hello",
+                      description: "When user hello",
+                      parameters: .init(type: .object,
+                                        properties: ["Hello" : .init(type: .string, description: "Say hello back")],
+                                        required: ["Hello"])
+                     )
+            ])
+
             let query = AssistantsQuery(model: Model.gpt4_1106_preview, name: name, description: description, instructions: instructions, tools:tools, fileIds: fileIds)
             let response = try await openAIClient.assistants(query: query, method: "POST", after: nil)
 
@@ -46,8 +54,15 @@ public final class AssistantStore: ObservableObject {
     @MainActor
     func modifyAssistant(asstId: String, name: String, description: String, instructions: String, codeInterpreter: Bool, retrievel: Bool, fileIds: [String]? = nil) async -> String? {
         do {
-            let tools = createToolsArray(codeInterpreter: codeInterpreter, retrieval: retrievel)
-            let query = AssistantsQuery(model: Model.gpt4_1106_preview, name: name, description: description, instructions: instructions, tools:tools, fileIds: fileIds)
+            let tools = createToolsArray(codeInterpreter: codeInterpreter, retrieval: retrievel, functions: [
+                .init(name: "Hello",
+                      description: "When user hello",
+                      parameters: .init(type: .object,
+                                        properties: ["Hello" : .init(type: .string, description: "Say hello back")],
+                                        required: ["Hello"])
+                     )
+            ])
+            let query = AssistantsQuery(model: Model.gpt4_1106_preview, name: name, description: description, instructions: instructions, tools: tools, fileIds: fileIds)
             let response = try await openAIClient.assistantModify(query: query, asstId: asstId)
 
             // Returns assistantId
@@ -67,8 +82,8 @@ public final class AssistantStore: ObservableObject {
 
             var assistants = [Assistant]()
             for result in response.data ?? [] {
-                let codeInterpreter = result.tools?.filter { $0.toolType == "code_interpreter" }.first != nil
-                let retrieval = result.tools?.filter { $0.toolType == "retrieval" }.first != nil
+                let codeInterpreter = result.tools?.filter { $0.type == "code_interpreter" }.first != nil
+                let retrieval = result.tools?.filter { $0.type == "retrieval" }.first != nil
                 let fileIds = result.fileIds ?? []
 
                 assistants.append(Assistant(id: result.id, name: result.name, description: result.description, instructions: result.instructions, codeInterpreter: codeInterpreter, retrieval: retrieval, fileIds: fileIds))
@@ -107,14 +122,19 @@ public final class AssistantStore: ObservableObject {
         }
     }
 
-    func createToolsArray(codeInterpreter: Bool, retrieval: Bool) -> [Tool] {
+    func createToolsArray(codeInterpreter: Bool, retrieval: Bool, functions: [ChatFunctionDeclaration]?) -> [Tool] {
         var tools = [Tool]()
         if codeInterpreter {
-            tools.append(Tool(toolType: "code_interpreter"))
+            tools.append(Tool(type: "code_interpreter", function: nil))
         }
         if retrieval {
-            tools.append(Tool(toolType: "retrieval"))
+            tools.append(Tool(type: "retrieval", function: nil))
         }
+
+        if let functions = functions {
+            functions.forEach { tools.append(Tool(type: "function", function: $0))}
+        }
+
         return tools
     }
 }
